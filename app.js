@@ -1122,10 +1122,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化 Supabase（已通过本地 supabase.min.js 加载）
     if (typeof window.supabase !== 'undefined' && typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) {
         try {
+            // 清除旧的登录状态
+            localStorage.removeItem('supabase.auth.token');
+            localStorage.removeItem('sb-' + CONFIG.SUPABASE_URL.replace('https://', '').replace('.supabase.co', '') + '-auth-token');
+            
             supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
                 auth: {
                     persistSession: false,
-                    autoRefreshToken: false
+                    autoRefreshToken: false,
+                    storage: {
+                        getItem: function(key) { return null; },
+                        setItem: function(key, value) {},
+                        removeItem: function(key) {}
+                    }
                 }
             });
             console.log('Supabase 初始化成功');
