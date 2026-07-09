@@ -732,8 +732,12 @@ function loadAssignedApiKey() {
     if (!display) return;
     
     supabaseClient.from('api_keys').select('*').eq('assigned_to', currentUser.id).eq('status', 'active').then(function(res) {
+        var lang = (typeof getLang === 'function') ? getLang() : 'zh';
+        var noKeyMsg = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang]['admin_no_key_assigned']) ? I18N[lang]['admin_no_key_assigned'] : '暂未分配API Key，请联系管理员';
+        var copyBtnText = (typeof I18N !== 'undefined' && I18N[lang] && I18N[lang]['api_copy']) ? I18N[lang]['api_copy'] : '复制';
+        
         if (res.error || !res.data || res.data.length === 0) {
-            display.innerHTML = '<div class="alert alert-warning">' + (typeof I18N !== 'undefined' && I18N[currentLang] ? I18N[currentLang]['admin_no_key_assigned'] : '暂未分配API Key，请联系管理员') + '</div>';
+            display.innerHTML = '<div class="alert alert-warning">' + noKeyMsg + '</div>';
             return;
         }
         
@@ -744,7 +748,7 @@ function loadAssignedApiKey() {
             html += '<div class="api-item">';
             html += '<div class="api-key-display">' + mask + '</div>';
             html += '<div class="api-actions">';
-            html += '<button class="btn btn-primary" onclick="copyKey(\'' + k.api_key + '\')">复制完整Key</button>';
+            html += '<button class="btn btn-primary" onclick="copyKey(\'' + k.api_key + '\')">' + copyBtnText + ' Key</button>';
             html += '</div>';
             html += '</div>';
         }
@@ -1118,7 +1122,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化 Supabase（已通过本地 supabase.min.js 加载）
     if (typeof window.supabase !== 'undefined' && typeof CONFIG !== 'undefined' && CONFIG.SUPABASE_URL) {
         try {
-            supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY);
+            supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: false,
+                    autoRefreshToken: false
+                }
+            });
             console.log('Supabase 初始化成功');
             supabaseClient.auth.getSession().then(function(res) {
                 if (res.data.session && res.data.session.user) {
