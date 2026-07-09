@@ -298,6 +298,14 @@ function loadAdminUsageRecords() {
 // 页面导航 - 全局可用
 // ============================================
 function showPage(pageId) {
+    // 权限检查 - 在显示页面之前
+    if (['dashboard', 'recharge', 'api', 'history'].indexOf(pageId) !== -1 && !currentUser) {
+        pageId = 'login';
+    }
+    if (pageId === 'admin' && (!currentUser || !userProfile || userProfile.role !== 'admin')) {
+        pageId = 'login';
+    }
+    
     var pages = document.querySelectorAll('.page');
     for (var i = 0; i < pages.length; i++) {
         pages[i].style.display = 'none';
@@ -313,14 +321,8 @@ function showPage(pageId) {
             links[j].classList.add('active');
         }
     }
-    if (['dashboard', 'recharge', 'api', 'history'].indexOf(pageId) !== -1 && !currentUser) {
-        showPage('login');
-        return;
-    }
-    if (pageId === 'admin' && (!currentUser || !userProfile || userProfile.role !== 'admin')) {
-        showPage('login');
-        return;
-    }
+    // 控制导航链接显示/隐藏
+    updateNavVisibility();
     if (pageId === 'admin') loadAdminData();
     if (pageId === 'dashboard' && currentUser) loadDashboard();
     if (pageId === 'api' && currentUser) loadApiKeys();
@@ -328,6 +330,38 @@ function showPage(pageId) {
     if (pageId === 'recharge') {
         updatePaymentInfo();
         generateBankQRCode();
+    }
+}
+
+// 控制导航链接显示/隐藏
+function updateNavVisibility() {
+    var adminLink = document.querySelector('[data-page="admin"]');
+    var dashboardLink = document.querySelector('[data-page="dashboard"]');
+    var rechargeLink = document.querySelector('[data-page="recharge"]');
+    var apiLink = document.querySelector('[data-page="api"]');
+    var historyLink = document.querySelector('[data-page="history"]');
+    
+    if (!currentUser) {
+        // 未登录：隐藏需要登录的页面
+        if (dashboardLink) dashboardLink.parentElement.style.display = 'none';
+        if (rechargeLink) rechargeLink.parentElement.style.display = 'none';
+        if (apiLink) apiLink.parentElement.style.display = 'none';
+        if (historyLink) historyLink.parentElement.style.display = 'none';
+        if (adminLink) adminLink.parentElement.style.display = 'none';
+    } else if (userProfile && userProfile.role === 'admin') {
+        // 管理员：显示所有
+        if (dashboardLink) dashboardLink.parentElement.style.display = '';
+        if (rechargeLink) rechargeLink.parentElement.style.display = '';
+        if (apiLink) apiLink.parentElement.style.display = '';
+        if (historyLink) historyLink.parentElement.style.display = '';
+        if (adminLink) adminLink.parentElement.style.display = '';
+    } else {
+        // 普通用户：隐藏管理后台
+        if (dashboardLink) dashboardLink.parentElement.style.display = '';
+        if (rechargeLink) rechargeLink.parentElement.style.display = '';
+        if (apiLink) apiLink.parentElement.style.display = '';
+        if (historyLink) historyLink.parentElement.style.display = '';
+        if (adminLink) adminLink.parentElement.style.display = 'none';
     }
 }
 
@@ -420,8 +454,8 @@ function logout() {
 // 加载用户资料
 // ============================================
 function loadUserProfile() {
-    if (!currentUser || !supabaseClient) return;
-    supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single().then(function(res) {
+    if (!currentUser || !supabaseClient) return Promise.resolve();
+    return supabaseClient.from('profiles').select('*').eq('id', currentUser.id).single().then(function(res) {
         if (res.data) userProfile = res.data;
     });
 }
@@ -1089,11 +1123,18 @@ document.addEventListener('DOMContentLoaded', function() {
             supabaseClient.auth.getSession().then(function(res) {
                 if (res.data.session && res.data.session.user) {
                     currentUser = res.data.session.user;
-                    loadUserProfile();
+                    loadUserProfile().then(function() {
+                        updateNavVisibility();
+                    });
+                } else {
+                    updateNavVisibility();
                 }
             });
         } catch(e) {
             console.error('Supabase初始化失败', e);
+            updateNavVisibility();
         }
+    } else {
+        updateNavVisibility();
     }
 });
