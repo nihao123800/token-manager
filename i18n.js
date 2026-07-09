@@ -58,6 +58,7 @@ const I18N = {
         
         // 控制台
         dashboard_title: '我的控制台',
+        dashboard_my_api_key: '我的 API Key',
         balance: '账户余额',
         today_usage: '今日使用量',
         month_usage: '本月使用量',
@@ -239,6 +240,7 @@ const I18N = {
         
         // Dashboard
         dashboard_title: 'My Dashboard',
+        dashboard_my_api_key: 'My API Key',
         balance: 'Balance',
         today_usage: "Today's Usage",
         month_usage: 'Monthly Usage',
@@ -420,6 +422,7 @@ const I18N = {
         
         // Bảng điều khiển
         dashboard_title: 'Bảng Điều Khiển Của Tôi',
+        dashboard_my_api_key: 'API Key Của Tôi',
         balance: 'Số dư',
         today_usage: 'Sử dụng hôm nay',
         month_usage: 'Sử dụng tháng này',
